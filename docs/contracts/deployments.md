@@ -10,21 +10,25 @@ The following contracts are deployed on Base Sepolia testnet for testing and dev
 
 | Component | Address | Type | Purpose |
 |-----------|---------|------|---------|
-| **SXXX Token** | `0x852F8eeb8AF2ec89A1007581aA6C24C7269c37Cc` | ERC20Votes | Governance token for delegation and voting |
-| **SubDAO Factory** | `0x8C529DB96728409dD79A115c03e9f8F69629f86f` | Diamond | Creates new SubDAOs using minimal proxies |
-| **Library Registry** | `0xD74Ea9f551c713F47B016fC9D0E9AfDfEFFe9474` | Registry | Global directory for library manifests |
-| **Prompt Registry** | `0x9450550c66b2714B460a4756089b89b681d04e86` | Implementation | Stores prompts with versioning and attribution |
-| **Governor** | `0xeC8361BF0B0519D28C5c91EF8bA106484d93304c` | Implementation | Governance contract template |
-| **Timelock** | `0x8d7fA1cC9d26Dc5Af474833575052E84b531c524` | Implementation | Time-delayed execution for proposals |
-| **Boost Manager (Merkle)** | `0x51F67373e9F25C5d8e9AE26C32C71394BC2daf0C` | Incentives | Merkle-based reward distribution |
-| **Boost Manager (Direct)** | `0xadd36832742d410C68c7Dbb5a6bdCd5ABc73c015` | Incentives | Direct reward distribution |
-| **Premium Prompts** | `0x074AA7b4A5c9C38938C4b1bb151c94211bf28839` | Marketplace | Paid prompt access and revenue splits |
-| **Safe Master Copy** | `0xc7a937dcdD098c4275547eFf5dB14Fafd513E723` | Treasury | Gnosis Safe template for treasuries |
-| **Template Module** | `0x8F14fc0ce3801E0ae39dd718C2f58eb7463a8F3f` | Configuration | DAO configuration templates |
-| **VotingMultiplierNFT** | `0x60802046dc625B8Ea0Be82b25023F713C48d4fdE` | NFT | Voting power multiplier NFTs |
-| **SageAuctionHouse** | `0xafBd5cd0C537fdC62F9B193F4f760281e8E879A3` | Auction | Nouns-style NFT auctions |
-| **SimpleContributorSystem** | `0x9d185eB3386737eAE360E101e52D5cEcAc92e76C` | Reputation | Contributor staking and reputation tracking |
-| **SimpleBountySystem** | `0xa78967558C82b5393b42cCb60DF50376Ae387DD4` | Bounties | Task bounties with escrow and submissions |
+| **SXXX Token** | `0xA09e10Ce709A2a0895Cebb6595089BFCEBb88e63` | ERC20Votes | Governance token for delegation and voting |
+| **SubDAO Factory** | `0x9a3a5bA9A71d40815d49b0a98AE7A019994D6d89` | Diamond | Creates new SubDAOs using minimal proxies |
+| **Library Registry** | `0x3490D8942f21e47D4Bc327c4eFcD6dEbE3B24EAB` | Registry | Global directory for library manifests |
+| **Prompt Registry** | `0xda97A508CADfdE1d205F7Ee40D5871E7A047EEfc` | Implementation | Stores prompts with versioning and attribution |
+| **Governor** | `0x545BBBbD4ec74063473d0Bb91F38514e67AeF41a` | Implementation | Governance contract template |
+| **Timelock** | `0x4bAAe2b995F3c7b593896968eDBCf5a75e0bDbBA` | Implementation | Time-delayed execution for proposals |
+| **Boost Manager (Merkle)** | `0x5fEA0566570A57B6e30e713D8E6aF4963b1865bA` | Incentives | Merkle-based reward distribution |
+| **Boost Manager (Direct)** | `0xAE7F450Bd7fC9cF1459f160c550B16E4842A3C98` | Incentives | Direct reward distribution |
+| **Premium Prompts** | `0x9cFfd7E277b167c55760316C67f50FDc8005c590` | Marketplace | Paid prompt access and revenue splits |
+| **Safe Master Copy** | `0x87518d407235196c82B6C8F491d94f554f705435` | Treasury | Gnosis Safe template for treasuries |
+| **Template Module** | `0x47e7F7B9c5AB13F2B76801C983cE1825975D321f` | Configuration | DAO configuration templates |
+| **VotingMultiplierNFT** | `0xdd4bacBB3d84c0839d19897E8545B8d88932C73b` | NFT | Voting power multiplier NFTs |
+| **SageAuctionHouse** | `0x5BEe8C80a3c4e77CaE424bf2976506dFc49Cc739` | Auction | Nouns-style NFT auctions |
+| **SimpleContributorSystem** | `0xBDe855A6ce1df109B55088A37a986B3bD08AA47b` | Reputation | Contributor staking and reputation tracking |
+| **SimpleBountySystem** | `0x75C992dc53790b44B710d16BD096a40fAA651Ff7` | Bounties | Task bounties with escrow and submissions |
+| **SoulboundBadge** | `0xE1c57F11Ce47bc70B59d66172Cdc9263B17DeA38` | NFT | Non-transferable achievement badges |
+| **ReputationLedger** | `0xc6BaD2C006C479a3dB53065eD943Dd79Eb846944` | Reputation | On-chain author stats with merkle settlements |
+| **SXXX Faucet** | `0xD7DF6CF9bab0e0f2dD858B579909E752227A3455` | Utility | Testnet token faucet |
+| **MockUSDC** | `0x37021A43CE0ed83BFDB0194e05e7dFF7bEcAcB05` | ERC20 | Test USDC for development |
 
 ### Network Information
 
@@ -142,9 +146,9 @@ sage config show
 # Output:
 # Network: base-sepolia
 # RPC: https://sepolia.base.org
-# Factory: 0x8C529DB96728409dD79A115c03e9f8F69629f86f
-# Library Registry: 0xD74Ea9f551c713F47B016fC9D0E9AfDfEFFe9474
-# SXXX Token: 0x852F8eeb8AF2ec89A1007581aA6C24C7269c37Cc
+# Factory: 0x9a3a5bA9A71d40815d49b0a98AE7A019994D6d89
+# Library Registry: 0x3490D8942f21e47D4Bc327c4eFcD6dEbE3B24EAB
+# SXXX Token: 0xA09e10Ce709A2a0895Cebb6595089BFCEBb88e63
 ```
 
 ---
@@ -260,8 +264,8 @@ const sdk = new SageSDK({
   network: 'base-sepolia',
   rpcUrl: 'https://sepolia.base.org',
   contracts: {
-    factory: '0x8C529DB96728409dD79A115c03e9f8F69629f86f',
-    libraryRegistry: '0xD74Ea9f551c713F47B016fC9D0E9AfDfEFFe9474',
+    factory: '0x9a3a5bA9A71d40815d49b0a98AE7A019994D6d89',
+    libraryRegistry: '0x3490D8942f21e47D4Bc327c4eFcD6dEbE3B24EAB',
   }
 })
 
