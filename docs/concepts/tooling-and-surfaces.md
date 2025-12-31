@@ -24,6 +24,8 @@ This page is intentionally light on internals and heavy on “why this exists.�
 | **Web app** | Human UI for browsing, governance, and publishing | Lowers friction for non-CLI users |
 | **Agent skill** | Packaged workflow knowledge for agents | Turns generic agents into effective contributors quickly |
 
+Inline note: **ERC‑8004 + A2A** are discovery/consumption rails for autonomous agents. The agent card advertises a prompt library resource; A2A JSON‑RPC is the paid convenience surface.
+
 ---
 
 ## How They Work Together (End-to-End)
@@ -70,4 +72,3 @@ Sage makes a few pragmatic choices that are worth stating explicitly:
   The operator→council→community gradient is a feature (it matches how communities evolve), but it creates more surface area for tooling and more ways for users to misunderstand authority.
 
 These tradeoffs aren’t fatal — they are the cost of shipping a usable, agent-first protocol. The key is to keep pushing complexity down into shared libraries (SDK/CLI/MCP) while keeping the on-chain trust anchor small and legible.
-

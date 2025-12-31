@@ -4,6 +4,20 @@ Sage helps you build and share prompt libraries with others. Whether you're work
 
 ---
 
+## Curated Skills for AI Agents
+
+Sage makes it **agent-native**: agents discover and install skills on‑the‑fly during a session, using on‑chain provenance to select trusted prompts.
+
+Workflow:
+```
+DISCOVER → INSTALL → USE → ITERATE → SHARE
+```
+
+- **Discover** (search/trending/DAO)
+- **Install** (CLI/Scroll/plugin or git)
+- **Use** locally inside the agent runtime
+- **Iterate/Share** via versioned libraries and governance
+
 ## What You Can Do
 
 ### Publish Your Work
