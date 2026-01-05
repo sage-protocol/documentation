@@ -103,13 +103,11 @@ This pattern is intended to cover library updates, premium endorsement flows (fu
   - ERC1155 token representing ownership of a personal premium license.
   - Used in Lit access conditions to gate decryption.
 
-- **PremiumPrompts / DAO‑Level Premium (Legacy / Roadmap)**  
-  - Earlier iterations included DAO‑scoped premium contracts (`PremiumPrompts`) that integrated directly with DAOs for revenue splits and governance‑gated publishing.
-  - For the current beta, these flows are **not** the primary path; CLI support has been reduced in favor of personal premium.
-  - Future DAO‑level premium and endorsement flows are expected to:
-    - Use governance proposals to register and endorse content.
-    - Rely on DAOs’ Timelocks for execution.
-    - Be indexed for transparent auditing.
+- **PremiumPrompts / DAO‑Level Premium (Deprecated by Design)**
+  - Earlier iterations included DAO‑scoped premium contracts (`PremiumPrompts`) for revenue splits and governance‑gated publishing.
+  - DAO‑level premium is **not supported** due to the governance paradox: members cannot evaluate encrypted content before voting (see [ADR-001](/docs/adr/001-personal-only-premium.md)).
+  - Personal Premium via `PersonalMarketplace` is the supported path for monetizing encrypted content.
+  - The `PremiumPrompts` contract remains deployed for Lit Protocol balance checks on any legacy licenses.
 
 ---
 

@@ -11,7 +11,7 @@ Not all prompts should be free:
 - Creators deserve compensation for valuable work
 - Premium content funds continued development
 
-Sage supports two premium models: **Personal** (creator-controlled) and **DAO** (community-governed).
+Sage supports premium content through **Personal DAOs** where the creator controls both the content and governance.
 
 ## Personal Premium
 
@@ -97,27 +97,41 @@ sage personal unlist trading-strategy -y
 sage personal list
 ```
 
-## DAO Premium (Roadmap)
+## Why Personal DAOs Only
 
-DAOs can endorse and sell premium prompts with revenue sharing:
+Premium content is **only available for Personal DAOs** by design. Community DAOs are for public prompts only.
+
+### The Governance Paradox
+
+In community DAOs, members vote on adding prompts to the library. With encrypted content, they cannot evaluate what they're voting to include - this breaks the governance model's core assumption of informed decision-making.
 
 ```
-Creator ──submit──▶ DAO Governance ──endorse──▶ DAO Marketplace
-                                                      │
-                                                      ▼
-                                              Revenue Split
-                                              70% Creator
-                                              20% DAO Treasury
-                                              10% Protocol
+Creator ──submit encrypted──▶ DAO Governance ──vote──▶ ???
+                                    │
+                                    ▼
+                        Members can't decrypt to evaluate
+                        (they don't own licenses yet)
 ```
 
-This creates:
+### Why Personal DAOs Work
 
-- Quality curation (DAO votes on what gets endorsed)
-- Revenue for DAOs
-- Distribution for creators
+Personal DAOs solve this because:
 
-**Status:** Currently in design. Use personal premium for now.
+- The creator IS the governance (single voter)
+- The creator already knows the content
+- No blind evaluation problem exists
+
+### What About DAO Revenue Sharing?
+
+DAOs can still monetize through:
+
+- **Public prompts** - Community-curated free content builds reputation
+- **Bounties** - DAOs fund prompt creation, results are public
+- **Staking rewards** - Token holders earn from protocol fees
+
+For premium monetization, use a Personal DAO where you control both content and governance.
+
+See [ADR-001: Personal-Only Premium](/docs/adr/001-personal-only-premium.md) for the full architectural decision.
 
 ## Encryption (Lit Protocol)
 

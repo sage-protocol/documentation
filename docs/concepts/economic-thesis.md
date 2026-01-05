@@ -87,7 +87,7 @@ Today, the core mechanisms are live:
 
 Some adjacent systems are still evolving:
 
-- DAO-level premium endorsement and revenue splits (roadmap)
+- DAO monetization through bounties and public content curation (premium restricted to Personal DAOs by design - see [ADR-001](/docs/adr/001-personal-only-premium.md))
 - Credit-based paid pinning (experimental worker + credits ledger)
 - Ongoing simplification of “source of truth” for library views as bounty flows mature
 
