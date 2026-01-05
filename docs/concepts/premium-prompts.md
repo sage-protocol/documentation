@@ -5,6 +5,7 @@ Premium prompts let creators monetize their expertise. The content is encrypted 
 ## Why Premium?
 
 Not all prompts should be free:
+
 - Expert knowledge took years to develop
 - Specialized prompts serve niche audiences
 - Creators deserve compensation for valuable work
@@ -36,6 +37,7 @@ sage personal premium publish trading-strategy \
 ```
 
 The CLI:
+
 1. Encrypts the prompt content using Lit Protocol
 2. Uploads encrypted content to IPFS
 3. Registers the prompt in PersonalMarketplace contract
@@ -64,6 +66,7 @@ sage personal premium access 0xCreator trading-strategy
 ```
 
 The CLI:
+
 1. Checks you own the license receipt
 2. Uses Lit Protocol to decrypt
 3. Displays the prompt content
@@ -72,12 +75,12 @@ The CLI:
 
 Prices are set in SXXX tokens:
 
-| Price | Typical Use |
-|-------|-------------|
-| 5-25 SXXX | Simple prompts, templates |
-| 25-100 SXXX | Domain expertise, workflows |
-| 100-500 SXXX | Premium strategies, systems |
-| 500+ SXXX | Enterprise, consulting-grade |
+| Price        | Typical Use                  |
+| ------------ | ---------------------------- |
+| 5-25 SXXX    | Simple prompts, templates    |
+| 25-100 SXXX  | Domain expertise, workflows  |
+| 100-500 SXXX | Premium strategies, systems  |
+| 500+ SXXX    | Enterprise, consulting-grade |
 
 **Protocol fee:** 10% goes to the protocol treasury.
 
@@ -109,6 +112,7 @@ Creator ──submit──▶ DAO Governance ──endorse──▶ DAO Marketpl
 ```
 
 This creates:
+
 - Quality curation (DAO votes on what gets endorsed)
 - Revenue for DAOs
 - Distribution for creators
@@ -117,18 +121,21 @@ This creates:
 
 ## Encryption (Lit Protocol)
 
-Premium prompts use **Lit Protocol** for decentralized encryption:
+Premium prompts use **hybrid encryption** combining AES-256-GCM and Lit Protocol:
 
-1. **Encryption:** Content encrypted with Lit access conditions
-2. **Access condition:** Must own the ERC1155 license receipt
-3. **Decryption:** Lit nodes verify ownership, provide decryption key
-4. **Result:** Only license holders can read content
+1. **Content encryption:** Prompt encrypted locally with AES-256-GCM symmetric key
+2. **Key gating:** Symmetric key encrypted with Lit Protocol access conditions
+3. **Access condition:** Must own the ERC1155 license receipt
+4. **Decryption:** Lit nodes verify ownership, release key; content decrypted locally
 
 This means:
+
 - Content is encrypted at rest (on IPFS)
 - No central server holds decryption keys
 - License ownership is on-chain and verifiable
 - Creator doesn't need to be online for decryption
+
+For technical details on the encryption architecture, data structures, and implementation, see the [Encryption Architecture Reference](../reference/encryption-architecture.md).
 
 ## License Receipts (ERC1155)
 
@@ -139,6 +146,7 @@ PersonalLicenseReceipt.balanceOf(buyer, promptId) > 0
 ```
 
 Properties:
+
 - **Transferable:** Can sell or gift your license
 - **Provable:** On-chain proof of purchase
 - **Composable:** Other contracts can check ownership
@@ -146,12 +154,14 @@ Properties:
 ## When to Use Premium
 
 **Use premium for:**
+
 - Specialized domain expertise
 - Prompts with significant R&D investment
 - Content serving professional/enterprise users
 - Monetizing your prompt engineering skills
 
 **Keep free for:**
+
 - Basic/foundational prompts
 - Community-building content
 - Prompts you want maximally distributed
@@ -161,12 +171,12 @@ Properties:
 
 Many creators use a hybrid approach:
 
-| Tier | Content | Price |
-|------|---------|-------|
-| Free | Basic prompts, templates | 0 |
-| Free | Community contributions | 0 |
-| Premium | Expert workflows | 25-100 SXXX |
-| Premium | Domain-specific systems | 100-500 SXXX |
+| Tier    | Content                  | Price        |
+| ------- | ------------------------ | ------------ |
+| Free    | Basic prompts, templates | 0            |
+| Free    | Community contributions  | 0            |
+| Premium | Expert workflows         | 25-100 SXXX  |
+| Premium | Domain-specific systems  | 100-500 SXXX |
 
 Free content builds audience; premium content monetizes expertise.
 

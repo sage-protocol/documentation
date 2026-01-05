@@ -46,7 +46,6 @@ extra_css:
 extra_javascript:
   - assets/mermaid_config.js
 
-
 markdown_extensions:
   - abbr
   - admonition
@@ -113,6 +112,8 @@ nav:
       - IPFS & Pinning: cli/ipfs.md
   - SDK:
       - Overview: sdk/index.md
+  - Reference:
+      - Encryption Architecture: reference/encryption-architecture.md
 
 plugins:
   - search

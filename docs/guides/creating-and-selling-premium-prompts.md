@@ -67,6 +67,7 @@ sage personal premium publish trading-strategy \
 ```
 
 This command:
+
 1. Encrypts your prompt with a symmetric key
 2. Uses Lit Protocol to gate the key (only license holders can decrypt)
 3. Uploads encrypted content to IPFS
@@ -86,6 +87,7 @@ sage personal premium publish my-prompt \
 ```
 
 **Options:**
+
 - `--price <sxxx>` - Price in SXXX tokens (required)
 - `--file <path>` - Path to your prompt content (required)
 - `--name <name>` - Display name
@@ -100,12 +102,12 @@ sage personal premium publish my-prompt \
 
 Prices are set in SXXX tokens:
 
-| Price Range | Typical Use |
-|-------------|-------------|
-| 5-25 SXXX | Simple prompts, templates |
-| 25-100 SXXX | Domain expertise, workflows |
-| 100-500 SXXX | Premium strategies, systems |
-| 500+ SXXX | Enterprise, consulting-grade |
+| Price Range  | Typical Use                  |
+| ------------ | ---------------------------- |
+| 5-25 SXXX    | Simple prompts, templates    |
+| 25-100 SXXX  | Domain expertise, workflows  |
+| 100-500 SXXX | Premium strategies, systems  |
+| 500+ SXXX    | Enterprise, consulting-grade |
 
 **Protocol fee:** 10% goes to the protocol treasury.
 
@@ -120,6 +122,7 @@ sage personal premium price 0xCreatorAddress trading-strategy
 ```
 
 Output shows:
+
 - Base price
 - Protocol fee (10%)
 - Total cost
@@ -133,6 +136,7 @@ sage personal premium buy 0xCreatorAddress trading-strategy \
 ```
 
 **Options:**
+
 - `--max-price <sxxx>` - Maximum you're willing to pay
 - `--auto-approve` - Automatically approve SXXX allowance
 - `--unlimited` - When auto-approving, approve unlimited allowance
@@ -155,6 +159,7 @@ sage personal premium access 0xCreatorAddress trading-strategy
 ```
 
 This:
+
 1. Checks your license receipt ownership
 2. Contacts Lit Protocol nodes to verify
 3. Decrypts the symmetric key
@@ -222,6 +227,7 @@ sage personal my-licenses
 ```
 
 Options:
+
 ```bash
 sage personal my-licenses \
   --holder 0xAddress \
@@ -241,6 +247,7 @@ License receipts are semi-fungible tokens with special properties:
 - **Perpetual** - Access doesn't expire
 
 Check ownership:
+
 ```solidity
 PersonalLicenseReceipt.balanceOf(buyer, promptId) > 0
 ```
@@ -249,18 +256,21 @@ PersonalLicenseReceipt.balanceOf(buyer, promptId) > 0
 
 ## Encryption Details
 
-Sage uses Lit Protocol for decentralized encryption:
+Sage uses **hybrid encryption** combining AES-256-GCM and Lit Protocol:
 
-1. **Encryption** - Content encrypted with symmetric key
-2. **Key gating** - Lit Protocol gates the key with access conditions
+1. **Encryption** - Content encrypted locally with AES-256-GCM symmetric key
+2. **Key gating** - Lit Protocol gates the symmetric key with access conditions
 3. **Access condition** - Must own the ERC1155 license receipt
-4. **Decryption** - Lit nodes verify ownership, provide decryption key
+4. **Decryption** - Lit nodes verify ownership and release key; content decrypted locally
 
 This means:
+
 - Content is encrypted at rest on IPFS
 - No central server holds decryption keys
 - Creator doesn't need to be online for buyers to decrypt
 - License ownership is on-chain and verifiable
+
+For a complete technical deep-dive including data structures, flows, and implementation details, see the [Encryption Architecture Reference](../reference/encryption-architecture.md).
 
 ---
 
@@ -268,12 +278,12 @@ This means:
 
 Many creators use a hybrid approach:
 
-| Tier | Content | Price |
-|------|---------|-------|
-| Free | Basic prompts, templates | 0 |
-| Free | Community contributions | 0 |
-| Premium | Expert workflows | 25-100 SXXX |
-| Premium | Domain-specific systems | 100-500 SXXX |
+| Tier    | Content                  | Price        |
+| ------- | ------------------------ | ------------ |
+| Free    | Basic prompts, templates | 0            |
+| Free    | Community contributions  | 0            |
+| Premium | Expert workflows         | 25-100 SXXX  |
+| Premium | Domain-specific systems  | 100-500 SXXX |
 
 Free content builds audience; premium content monetizes expertise.
 
