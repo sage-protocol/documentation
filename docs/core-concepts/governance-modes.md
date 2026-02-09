@@ -1,6 +1,8 @@
 # Governance Modes
 
-Sage Protocol uses a **playbook system** with a **3-axis governance model** that allows communities to configure governance based on their size, maturity, and coordination needs. Each playbook pre-configures these axes to match common use cases.
+This document explains Sage Protocol's playbook system — a pre-configured set of governance modes that let communities start with the right governance model and evolve over time. It covers the 3-axis model, the available playbooks, and the design rationale behind them.
+
+For the conceptual overview of governance models, see [Governance Models](../concepts/governance-models.md). For step-by-step DAO creation, see [Creating a DAO](../guides/creating-a-subdao.md). For governance parameter reference, see the [CLI Reference](../cli/command-reference.md).
 
 ---
 
@@ -8,298 +10,102 @@ Sage Protocol uses a **playbook system** with a **3-axis governance model** that
 
 Every Sage DAO is configured along three independent axes:
 
-| Axis | Values | What It Controls |
-|------|--------|------------------|
-| **governanceKind** | `OPERATOR` / `TOKEN` | Who decides: trusted operator(s) vs token voting |
-| **proposalAccess** | `COUNCIL_ONLY` / `COMMUNITY_THRESHOLD` | Who can create proposals |
-| **executionAccess** | `COUNCIL_ONLY` / `ANYONE` | Who can execute passed proposals |
+**governanceKind** (OPERATOR vs TOKEN): Who decides — a trusted operator or token holders? This is the most fundamental choice, determining whether governance is hierarchical or democratic.
 
-This orthogonal design means you can mix and match - for example, allowing community members to propose changes while restricting execution to a trusted council.
+**proposalAccess** (COUNCIL_ONLY vs COMMUNITY_THRESHOLD): Who can create proposals? This controls the "idea pipeline" — whether proposals come from a trusted set or from anyone with enough tokens.
 
----
+**executionAccess** (COUNCIL_ONLY vs ANYONE): Who can execute passed proposals? This controls the "last mile" — whether execution requires trusted operators or is permissionless after timelock.
 
-## Governance Playbooks
-
-Playbooks are pre-configured combinations of the 3 axes optimized for common scenarios:
-
-| Playbook | governanceKind | proposalAccess | executionAccess | Best For |
-|----------|----------------|----------------|-----------------|----------|
-| `personal` | OPERATOR | COUNCIL_ONLY | COUNCIL_ONLY | Solo creators |
-| `council-closed` | OPERATOR | COUNCIL_ONLY | COUNCIL_ONLY | Teams with Safe multisig |
-| `council-drafts` | TOKEN | COMMUNITY_THRESHOLD | COUNCIL_ONLY | Community proposes, council executes |
-| `community` | TOKEN | COMMUNITY_THRESHOLD | ANYONE | Full token democracy |
-| `community-long` | TOKEN | COMMUNITY_THRESHOLD | ANYONE | Extended voting (7 days) |
+The orthogonal design means you can mix and match. This is intentional: real communities don't fit neatly into "centralized" or "decentralized" — they're usually somewhere in between, and they evolve over time.
 
 ---
 
-## Playbook Details
+## The Playbooks
+
+Playbooks are pre-configured combinations of the three axes, optimized for common scenarios. They exist because configuring three independent axes is overwhelming for new users. Playbooks provide opinionated defaults that match how most communities actually operate.
 
 ### Personal
 
-**Best for:** Solo creators who want to publish and iterate quickly.
+OPERATOR + COUNCIL_ONLY + COUNCIL_ONLY
 
-```bash
-sage dao create-playbook --playbook personal --name "My Library" --yes
-```
+The fastest governance mode. Your wallet controls everything. No voting, no waiting. Every change still flows through a Timelock for auditability — you can't silently modify the library — but the process is immediate.
 
-**Configuration:**
-- Single EOA (your wallet) controls the DAO
-- No token voting required
-- Proposals execute through Timelock for transparency
-- Fastest iteration speed
-
-**How it works:**
-1. You create proposals via the Governor
-2. Proposals auto-succeed (you're the only voter)
-3. After timelock delay, you execute
-4. All changes are on-chain and auditable
-
----
+We include this because solo creators are a primary audience. Requiring community governance for a personal prompt library would be absurdly heavy. But we still want auditable, on-chain updates.
 
 ### Council-Closed
 
-**Best for:** Teams that want shared control via a Safe multisig.
+OPERATOR + COUNCIL_ONLY + COUNCIL_ONLY (with Safe multisig)
 
-```bash
-sage dao create-playbook --playbook council-closed --name "Team Library" \
-  --owners "0xAlice,0xBob,0xCarol" --threshold 2 --yes
-```
+A Safe multisig controls the DAO. Only Safe signers can propose and execute. No external token voting. Good for small teams (3-10 people) with high mutual trust who want shared control.
 
-**Configuration:**
-- Safe multisig controls the DAO
-- Only Safe signers can propose and execute
-- No external token voting
-- Good for small teams with high trust
-
-**How it works:**
-1. Any Safe signer proposes changes
-2. Required signatures confirm approval
-3. After timelock, any signer can execute
-4. Full audit trail on-chain
-
----
+The Safe integration means no single team member can make unilateral changes. The threshold mechanism (e.g., 2-of-3) provides accountability without the overhead of token voting.
 
 ### Council-Drafts
 
-**Best for:** Communities that want input but maintain execution control.
+TOKEN + COMMUNITY_THRESHOLD + COUNCIL_ONLY
 
-```bash
-sage dao create-playbook --playbook council-drafts --name "Hybrid DAO" \
-  --owners "0xAlice,0xBob,0xCarol" --yes
-```
+The community proposes and votes. The council executes. This is our answer to the "premature decentralization" problem — communities that want democratic input but aren't ready for fully permissionless execution.
 
-**Configuration:**
-- Community members can create proposals (if they meet token threshold)
-- Token holders vote on proposals
-- Only council can execute passed proposals
-- Balance of community input with trusted execution
-
-**How it works:**
-1. Community member creates proposal (needs SXXX stake)
-2. Token holders vote during voting period
-3. If quorum + majority reached, proposal succeeds
-4. Council Safe executes after timelock
-
----
+The council acts as a safety net. If a malicious proposal passes through voter apathy or manipulation, the council can decline to execute it. This makes governance experimentation safer during the transition from centralized to decentralized control.
 
 ### Community
 
-**Best for:** Fully decentralized DAOs with token-weighted voting.
+TOKEN + COMMUNITY_THRESHOLD + ANYONE
 
-```bash
-sage dao create-playbook --playbook community --name "Community DAO" --yes
-```
+Full token democracy. Anyone with enough tokens can propose. Anyone can execute passed proposals after the timelock. This is the most resistant to capture but also the slowest.
 
-**Configuration:**
-- Anyone with enough tokens can propose
-- All token holders can vote
-- Anyone can execute passed proposals
-- Full token democracy
-
-**Default parameters:**
-- Voting period: 3 days
-- Quorum: 4% of token supply
-- Proposal threshold: 10,000 SXXX
-- Timelock delay: 2 days
-
-**How it works:**
-1. Holder with enough SXXX creates proposal
-2. Community votes For/Against/Abstain
-3. If quorum + majority reached, proposal queues
-4. After timelock, anyone can execute
-
----
+We recommend this for mature DAOs with established trust patterns and active voter participation. Starting here before the community is ready often leads to governance paralysis (quorum not met) or capture (small groups dominate).
 
 ### Community-Long
 
-**Best for:** High-stakes decisions requiring extended deliberation.
-
-```bash
-sage dao create-playbook --playbook community-long --name "Deliberative DAO" --yes
-```
-
-**Configuration:**
-- Same as `community` but with extended voting
-- 7-day voting period
-- Lower quorum (2%) to account for longer period
-- Good for major upgrades or treasury decisions
-
----
-
-## Governance Parameters
-
-All parameters can be customized during creation or updated via governance proposals:
-
-### Voting Parameters
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `votingDelay` | 1 day | Time before voting starts after proposal |
-| `votingPeriod` | 3-7 days | Duration of voting |
-| `proposalThreshold` | 10,000 SXXX | Tokens required to create proposal |
-| `quorumNumerator` | 2-4% | Minimum participation to pass |
-
-### Timelock Parameters
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `minDelay` | 1-2 days | Minimum execution delay |
-| `gracePeriod` | 7 days | Window to execute after delay |
+Same as community but with extended voting periods (7 days) and lower quorum (2%). Designed for high-stakes decisions that need more deliberation time and broader accessibility.
 
 ---
 
 ## Token Delegation
 
-For `TOKEN` governance (council-drafts, community, community-long), voting power comes from **delegated** SXXX tokens.
+For TOKEN governance modes, voting power comes from **delegated** SXXX tokens. This is a critical UX detail: holding tokens without delegating gives you zero voting power.
 
-**Important:** You must delegate before participating:
+We use delegation-based voting (ERC20Votes) because it enables:
 
-```bash
-# Delegate voting power to yourself
-sage sxxx delegate-self
+- **Passive participation**: Holders who don't want to vote can delegate to active community members
+- **Checkpointed voting**: Historical snapshots prevent flash-loan governance attacks
+- **Separation of holding and influence**: Token holders consciously choose to activate their governance power
 
-# Check your voting power
-sage sxxx delegation
-
-# Check if you can propose
-sage governance preflight --subdao 0xYourDAO
-```
-
-Delegation is required because ERC20Votes tokens track voting power via checkpoints. Without delegation, your tokens don't count toward voting or proposal thresholds.
-
----
-
-## Diagnosing Governance Mode
-
-Check a DAO's governance configuration:
-
-```bash
-# Full diagnostics
-sage governance diag --subdao 0xYourDAO
-
-# Check readiness to propose
-sage governance preflight --subdao 0xYourDAO
-```
-
-The `diag` command shows:
-- Current governance profile (playbook)
-- governanceKind, proposalAccess, executionAccess
-- Quorum and thresholds
-- Your voting power
+The tradeoff is UX friction. "I hold tokens but can't vote" confuses new users. We mitigate this with CLI commands (`sage sxxx delegate-self`) and web app prompts, but it remains a common support question.
 
 ---
 
 ## Transitioning Between Modes
 
-DAOs can evolve their governance over time via proposals:
+DAOs can evolve their governance over time. The typical progression is:
 
-### Personal → Community
+**Personal → Council**: As the creator builds a team, add a Safe multisig for shared control.
 
-```bash
-# 1. Create proposal to change governance profile
-sage governance propose-custom \
-  --description "Transition to community governance" \
-  --target 0xSubDAO \
-  --calldata <encoded-setProfile-call>
+**Council → Council-Drafts**: As the community grows, open proposal access to token holders while maintaining council execution control.
 
-# 2. After approval and execution, governance mode changes
-```
+**Council-Drafts → Community**: When the community has proven it can govern effectively, enable permissionless execution.
 
-### Council → Community
+All transitions go through the existing governance process — you can't bypass voting to change voting rules. This means the current stakeholders must approve any transition, which ensures governance changes have legitimacy.
 
-Teams often start with council governance and transition to community as the project matures:
-
-1. Deploy with `council-closed` or `council-drafts`
-2. Build community and distribute tokens
-3. Propose governance profile change
-4. Council executes the transition
+The reverse direction (community → council) is technically possible but socially difficult. Communities that have experienced democratic governance rarely accept returning to centralized control. If a governance change doesn't work out, forking is the more realistic escape valve.
 
 ---
 
-## CLI Commands for Governance
+## Tradeoffs
 
-```bash
-# Create DAO with specific playbook
-sage dao create-playbook --playbook <id> --name "..." --yes
+**Playbook simplicity vs. flexibility**: Playbooks are opinionated defaults. They make the common cases easy but may not cover every community's exact needs. Custom configurations are possible but require more expertise.
 
-# Check governance configuration
-sage governance diag --subdao 0x...
+**Council-drafts as transition state**: This mode is designed for transitioning communities, but some communities may stay in this mode indefinitely if they never feel comfortable with permissionless execution. This is fine — it's a legitimate governance model, not just a waypoint.
 
-# Check proposal readiness
-sage governance preflight --subdao 0x...
-
-# View proposal details
-sage governance info <proposal-id> --subdao 0x...
-
-# Vote on proposal
-sage governance vote-with-reason <id> 1 "Supporting this"
-
-# Queue passed proposal
-sage governance queue <id> --subdao 0x...
-
-# Execute after timelock
-sage governance execute <id> --subdao 0x...
-
-# Watch and auto-execute
-sage governance watch <id>
-```
+**Delegation as activation**: Requiring explicit delegation adds friction but prevents "surprise governance" where passive holders suddenly vote. We believe the friction is worth the security, but it requires ongoing user education.
 
 ---
 
-## Best Practices
+## How This Connects
 
-### For Solo Creators (Personal)
-
-- Start with `personal` for fastest iteration
-- All changes still go through Timelock for auditability
-- Consider transitioning to `community` as you build audience
-
-### For Teams (Council)
-
-- Use `council-closed` for internal tools and early development
-- Use `council-drafts` when you want community input
-- Keep Safe threshold at majority (e.g., 2-of-3, 3-of-5)
-- Document Safe signer responsibilities
-
-### For Communities
-
-- Start with higher quorum and lower thresholds to encourage participation
-- Enable delegation early so passive holders can participate
-- Use `community-long` for major treasury or upgrade decisions
-- Monitor quorum carefully - too high kills governance, too low enables attacks
-
----
-
-## Summary
-
-The playbook system makes it easy to start with the right governance model:
-
-| Your Situation | Recommended Playbook |
-|----------------|---------------------|
-| Solo creator, want speed | `personal` |
-| Small team, shared control | `council-closed` |
-| Team + community input | `council-drafts` |
-| Full decentralization | `community` |
-| High-stakes decisions | `community-long` |
-
-All playbooks can evolve over time - start simple and add complexity as your community grows.
+- [Governance Models](../concepts/governance-models.md) — The conceptual framework for governance choices
+- [Creating a DAO](../guides/creating-a-subdao.md) — Step-by-step DAO creation
+- [Proposal Threshold](../concepts/proposal-threshold.md) — Anti-spam requirements
+- [Delegation & Voting Power](../guides/delegation-and-governance.md) — Getting voting power
+- [Governance (Architecture)](../../docs/core/governance.md) — How governance affects the codebase

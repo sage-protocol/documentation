@@ -1,276 +1,115 @@
 # Bounties & Incentives
 
-Bounties are how Sage Protocol incentivizes contributions. They create a permissionless marketplace for prompt improvements.
+This document explains how Sage Protocol's bounty system works, why it exists, and how it creates a permissionless marketplace for prompt improvements. It covers the design rationale, the different bounty modes, and how bounties connect to the broader incentive architecture.
+
+For step-by-step instructions on creating and managing bounties, see [Creating Bounties](../guides/creating-bounties.md).
+
+---
 
 ## Why Bounties?
 
-Good prompts don't appear fully formed. They need iteration:
-- Edge cases discovered through real use
-- New use cases that weren't anticipated
-- Better examples and constraints
-- Integration with new tools
+Good prompts don't appear fully formed. They need iteration — edge cases discovered through real use, new use cases that weren't anticipated, better examples and constraints, integration with new tools. This maintenance work is valuable, but most prompt ecosystems have no way to fund it.
 
-Bounties let anyone signal "this needs work" and put money behind it.
+Bounties solve this by creating a marketplace: anyone can signal "this needs work" and put money behind it. Contributors compete or collaborate to deliver the improvement. The bounty system turns prompt maintenance from unpaid goodwill into funded labor.
+
+This matters especially for agent ecosystems, where agents can discover open bounties, claim them, generate improved prompts, and submit results — creating a marketplace where agents compete to improve the tools they themselves use.
+
+---
 
 ## How Bounties Work
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  1. CREATE                                                   │
-│  DAO or individual creates bounty with reward               │
-│  Funds escrowed in SimpleBountySystem contract              │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  2. CLAIM                                                    │
-│  Contributors claim bounty to signal they're working        │
-│  (Optional - some bounties allow direct submission)         │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  3. SUBMIT                                                   │
-│  Contributor submits deliverable (usually IPFS CID)         │
-│  Multiple submissions allowed until approved                │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  4. APPROVE                                                  │
-│  DAO/operator approves submission                           │
-│  Funds automatically transfer to winner                     │
-└─────────────────────────────────────────────────────────────┘
-```
+The bounty lifecycle has four stages:
 
-## Creating Bounties
+**Create**: A DAO or individual creates a bounty with a reward amount. Funds are escrowed in the SimpleBountySystem contract — they leave the creator's wallet immediately and are held on-chain until the bounty is resolved.
 
-```bash
-sage bounty create \
-  --title "Improve SQL prompt edge case handling" \
-  --description "Add handling for CTEs, window functions, and subqueries" \
-  --reward 100 \
-  --deadline 30 \
-  --subdao 0x... \
-  -y
-```
+**Claim** (optional): Contributors signal they're working on the bounty. This is optional — some bounties allow direct submission without claiming first.
 
-**Parameters:**
-- `--title` - Brief description of what's needed
-- `--description` - Detailed requirements
-- `--reward` - Amount in SXXX tokens
-- `--deadline` - Days until bounty expires
-- `--subdao` - DAO context for governance bounties
+**Submit**: Contributors submit deliverables, usually as IPFS CIDs pointing to the improved content. Multiple submissions are allowed until one is approved.
 
-## Claiming and Submitting
+**Approve**: The DAO or operator approves a submission. Funds automatically transfer to the winner. The approval mechanism depends on the DAO's governance configuration.
 
-```bash
-# Browse open bounties
-sage bounty list --subdao 0x...
+---
 
-# Claim a bounty (signals you're working on it)
-sage bounty claim --bounty-id 42 -y
+## Approval Modes and Why They Differ
 
-# Submit your work
-sage bounty submit \
-  --bounty-id 42 \
-  --deliverable "ipfs://Qm..." \
-  -y
-```
+Different communities need different approval processes:
 
-## Approval Modes
+**Operator approval** is fastest — a single operator or Safe multisig approves submissions directly. This works well for small teams with clear acceptance criteria, where trust is high and speed matters.
 
-Different DAOs use different approval methods:
+**Board approval** adds multi-party review. Council members vote on submissions. This suits mid-size DAOs where quality judgment is subjective and multiple perspectives matter.
 
-### Operator Approval
+**Token voting** is most decentralized — the community votes on submissions through governance. This suits large communities and controversial decisions, but it's slow.
 
-Single operator or Safe multisig approves submissions directly.
+**Auto-approval** is for objective criteria (e.g., tests pass, lint clean). This is ideal for technical bounties where quality is measurable, but dangerous for subjective quality.
 
-```bash
-sage bounty approve --bounty-id 42 --submission 0 --winner 0x... -y
-```
+The choice between these modes reflects a fundamental tradeoff: faster approval means less review, which means more risk of low-quality work being accepted. Slower approval means better quality filtering, but also longer wait times for contributors.
 
-**Best for:** Small teams, clear acceptance criteria.
+---
 
-### Board Approval
+## Winner Selection: Competition vs. Assignment
 
-Council or board reviews and votes on submissions.
+Sage supports several selection modes because different tasks call for different dynamics:
 
-```bash
-# Board members vote
-sage bounty vote --bounty-id 42 --submission 0 --support for
-```
+**Competitive** bounties invite multiple submissions. The best one wins, selected by the approval mechanism. This produces higher quality through competition, but risks wasted effort by losing contributors.
 
-**Best for:** Mid-size DAOs, subjective quality.
+**Direct** bounties are pre-assigned to a specific contributor. Payment is guaranteed if the deliverable is accepted. This suits situations where there's a trusted contributor and the scope is well-defined.
 
-### Token Voting
+**Auto** mode awards the bounty to the first valid submission. This is fastest but provides no quality competition.
 
-Community votes on submissions through governance.
+We generally recommend competitive mode for prompt improvement bounties (where multiple perspectives produce better results) and direct mode for specific bug fixes (where the scope is narrow and competition adds unnecessary overhead).
 
-**Best for:** Large communities, controversial decisions.
-
-### Auto-Approval
-
-Submissions auto-approve if they meet predefined criteria (e.g., tests pass).
-
-**Best for:** Technical bounties with objective acceptance criteria.
-
-## Winner Selection Modes
-
-```bash
-# Set bounty selection mode
-sage bounty set-mode \
-  --subdao 0x... \
-  --mode auto \
-  --governance-config 0x... \
-  --bounty-system 0x...
-```
-
-| Mode | How It Works |
-|------|--------------|
-| `auto` | First valid submission wins |
-| `board` | Board/operator selects winner |
-| `token` | Token holders vote |
-| `competitive` | Multiple submissions, best wins |
+---
 
 ## Bounty Types
 
-### Prompt Improvement
+Most bounties fall into four categories, each serving a different need:
 
-Most common - improve an existing prompt:
+**Prompt improvement**: The most common type. An existing prompt has known limitations (doesn't handle edge cases, fails on specific input patterns) and someone is willing to pay for a fix. These bounties tend to be specific and well-scoped.
 
-```bash
-sage bounty create \
-  --title "Add error handling to code-review prompt" \
-  --description "Current prompt fails on malformed input. Add graceful error handling and helpful messages." \
-  --reward 50 \
-  --subdao 0x...
-```
+**New prompt creation**: Something doesn't exist yet and someone wants it built. These bounties tend to be larger (more work) but also riskier (subjective quality bar).
 
-### New Prompt
+**Bug fixes**: A specific issue with a known reproduction. These are the easiest to scope and verify.
 
-Create something that doesn't exist:
+**Documentation**: Improving examples, adding use cases, writing guides. Often undervalued but critical for adoption.
 
-```bash
-sage bounty create \
-  --title "Create database migration prompt" \
-  --description "Need a prompt for safe database migrations. Should handle rollbacks, zero-downtime, index management." \
-  --reward 200 \
-  --subdao 0x...
-```
+---
 
-### Bug Fix
+## Funding Sources
 
-Fix a specific issue:
+Bounties can be funded from personal wallets (creator pays at creation), DAO treasuries (governance proposal approves funding), or ETH payouts (for cross-token payments). The escrow mechanism ensures funds are locked — the creator can't withdraw once the bounty is active.
 
-```bash
-sage bounty create \
-  --title "Fix SQL injection vulnerability in query prompt" \
-  --description "The query-builder prompt doesn't properly escape user input. Reproduce: ..." \
-  --reward 100 \
-  --subdao 0x...
-```
+Treasury-funded bounties are particularly powerful because they align community resources with community needs. A DAO can identify its most important improvement areas and allocate treasury funds accordingly, creating a structured improvement roadmap.
 
-### Documentation
+---
 
-Improve docs or examples:
+## Soulbound Badges and Reputation
 
-```bash
-sage bounty create \
-  --title "Add examples to trading-analysis prompt" \
-  --description "Need 5+ real-world examples showing different market conditions" \
-  --reward 30 \
-  --subdao 0x...
-```
+When a bounty is approved, the winner can receive a soulbound badge — a non-transferable NFT proving their contribution. This creates a permanent on-chain record of work completed.
 
-## Funding Bounties
+Badges serve three purposes:
 
-Bounties can be funded from:
+- **Reputation**: Visible proof of past contributions that feeds into discovery ranking
+- **Access gating**: Higher-tier bounties can require specific badges (e.g., council membership, prior contributions)
+- **Social proof**: Non-transferable, so they represent actual achievement rather than purchased status
 
-### Direct Funding
+This creates a flywheel: completing bounties builds reputation, which unlocks access to more (and better-paying) bounties.
 
-Creator funds bounty at creation:
+---
 
-```bash
-sage bounty create --reward 100 ...
-# SXXX transferred from your wallet to escrow
-```
+## Boosts: Bounties for Governance
 
-### Treasury Funding
+Boosts extend the bounty concept to governance participation. When a DAO needs high voter turnout on an important proposal, it can fund a boost pool that pays voters who participate.
 
-DAO treasury funds bounty via governance:
+This addresses a real problem: voter apathy in DAOs. Most token holders don't vote because the effort exceeds the personal benefit. Boosts change the calculus by making voting directly rewarding.
 
-```bash
-sage bounty fund \
-  --subdao 0x... \
-  --bounty-id 42 \
-  --token 0xSXXX \
-  --amount 1000000000000000000
-```
+Boosts use either direct payouts (per-voter rewards tied to a specific proposal) or Merkle-based claims (pooled funding with an off-chain computed Merkle root). Both are timelock-controlled with reentrancy guards and double-claim prevention.
 
-### ETH Payouts
+---
 
-Some bounties pay in ETH instead of SXXX:
+## How This Connects
 
-```bash
-sage bounty payout-eth --bounty-id 42 --winner 0x... --amount 0.1
-```
-
-## Agent Bounties
-
-Agents can participate in the bounty system:
-
-```bash
-# Agent discovers open bounties
-sage bounty list --subdao 0x...
-
-# Agent claims bounty
-sage bounty claim --bounty-id 42 -y
-
-# Agent generates improved prompt
-# ... (agent work happens here) ...
-
-# Agent submits result
-sage bounty submit --bounty-id 42 --deliverable "ipfs://Qm..." -y
-```
-
-This creates a marketplace where agents compete to improve prompts.
-
-## Soulbound Badges
-
-When a bounty is approved, the winner can receive a **soulbound badge** - a non-transferable NFT proving their contribution:
-
-```bash
-# Mint badge to bounty winner
-sage sbt mint \
-  --to 0xWinner \
-  --reason contributor \
-  --uri "ipfs://Qm..."
-```
-
-Badges are used for:
-- On-chain reputation
-- Access gating (e.g., council membership)
-- Social proof
-
-## Boosts (Voting Incentives)
-
-Boosts are like bounties for governance participation:
-
-```bash
-# Create boost for a proposal
-sage boost create \
-  --proposal-id 123 \
-  --governor 0x... \
-  --per-voter 5_000000 \
-  --max-voters 100 \
-  --kind direct
-```
-
-Voters who participate receive USDC rewards. This increases participation on important proposals.
-
-## Related
-
-- [Creating Bounties](../guides/creating-bounties.md) - Step-by-step guide
-- [Agent Prompt Workflows](../guides/agent-prompt-workflows.md) - Agent participation
-- [Governance Models](./governance-models.md) - How DAOs work
+- [Creating Bounties](../guides/creating-bounties.md) — Step-by-step guide to creating and managing bounties
+- [Agent Prompt Workflows](../guides/agent-prompt-workflows.md) — How agents participate in bounties
+- [Economic Thesis](economic-thesis.md) — Why prompt maintenance needs a labor market
+- [Governance Models](governance-models.md) — How DAOs configure approval mechanisms
+- [Tokenomics](../../docs/core/tokenomics.md) — How bounties fit into the incentive architecture

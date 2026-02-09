@@ -1,282 +1,106 @@
 # Proposal Threshold
 
-Proposal threshold is Sage Protocol's anti-spam mechanism for governance. It ensures proposers have meaningful skin‑in‑the‑game (voting power) before creating proposals.
+This document explains Sage Protocol's proposal threshold mechanism — why it exists, how it interacts with other governance parameters, and the design decisions behind its behavior.
 
-## How It Works
+For CLI commands and configuration details, see [Delegation & Voting Power](../guides/delegation-and-governance.md) and [Voting on Proposals](../guides/voting-on-proposals.md).
 
-To create a proposal, you must have sufficient **effective votes** at the proposal snapshot (ERC20Votes; delegation required):
+---
 
-```
-Your Effective Votes at Snapshot >= Proposal Threshold
-```
+## Why Proposal Thresholds Exist
 
-Tokens stay in your wallet—no approve, no escrow, no claim. Just delegate voting power and propose.
+Any governance system faces a spam problem: if creating proposals is free, adversaries can flood the system with junk proposals that waste voter attention. Voter attention is the scarcest resource in a DAO — every spam proposal dilutes the community's capacity to evaluate real proposals.
 
-### Example
+Proposal thresholds solve this by requiring proposers to have meaningful **effective voting power** (ERC20Votes, which requires delegation). Tokens stay in your wallet — no escrow, no lockup, no claim process. You just need enough delegated voting power at the snapshot to prove you have skin in the game.
 
-```
-DAO Proposal Threshold: 50 SXXX
-Your Effective Votes: 150 SXXX
-Status: Can propose
-```
+This replaced an earlier escrow-based model where proposers deposited tokens that were returned after execution. We moved away from escrow because it added unnecessary UX friction (approve + deposit + claim) for a problem that voting power checks solve more elegantly.
 
-## Key Concepts
+---
 
-| Term | Definition |
-|------|------------|
-| **Proposal Threshold** | Minimum effective votes required to create a proposal |
-| **Snapshot Requirement** | Proposers must meet the threshold at the proposal snapshot |
-| **Cancel-if-Below** | Anyone can cancel if proposer's votes drop below the snapshotted threshold (Pending/Active) |
-| **Cooldown** | Optional rate limit between proposals (per-proposer) |
+## Voting Power, Not Raw Balance
 
-## Voting Power vs Raw Balance
+A subtle but important design choice: thresholds check **effective votes** (ERC20Votes), not raw token balance. This means:
 
-Proposal threshold checks your **effective votes** (ERC20Votes), not just your raw token balance.
+- **Delegation matters**: You must delegate (often to yourself) to have any voting power. Holding tokens without delegation gives you zero votes and zero proposal rights.
+- **Multipliers matter** (when enabled): DAO-scoped NFT multipliers affect your effective votes, so they also affect your ability to propose.
+- **Tokens delegated away don't count**: If you delegate your voting power to someone else, you can't propose — they can.
 
-| What Counts | What Doesn't |
-|-------------|--------------|
-| Delegated votes to you (including self-delegation) | Undelegated SXXX balance |
-| DAO-scoped NFT multipliers (when enabled) | Tokens you delegated away |
+We chose votes-based thresholds because they align proposing with the same "effective power" used for voting. This avoids the confusing case where someone holds enough tokens but can't propose because they haven't delegated, or where someone has delegated tokens from others and can propose with borrowed influence (which is a feature, not a bug — delegated influence is legitimate influence).
 
-This means:
-- **Delegation matters** - you must delegate (often to self) to have any voting power
-- **Multipliers matter (when enabled)** - your effective votes (and proposal eligibility) reflect NFT multipliers at the snapshot
-- **Holding without delegation is 0 votes** - raw balance alone does not grant proposal rights
+---
 
-### Why Voting Power?
+## The Cancellation Mechanism
 
-Votes-based threshold aligns proposing with the same “effective power” used for voting:
-- Matches how token governance is actually measured (`getVotes(...)` at a snapshot)
-- Avoids confusing “I hold tokens but can’t propose” cases (because delegation is explicit)
-- Supports DAO-scoped voting multipliers when enabled
+If your effective votes drop below the threshold while your proposal is active, **anyone can cancel it**. This is a deliberate anti-manipulation mechanism.
 
-## Minimum Voting Power to Vote (`minVotesToVote`)
+The cancellation window covers Pending and Active states. Once a proposal reaches Succeeded (voting ended, passed), your votes no longer affect it. We chose this "safe point" design because:
 
-Proposal threshold is about **who can propose**. Separately, token-governed DAOs enforce a minimum effective voting power to **cast a vote**:
+- It prevents post-vote manipulation where someone bribes the proposer to dump tokens
+- It provides certainty once the community has voted
+- Anti-spam protection is only needed during the proposal lifecycle, not during execution
 
-```
-Your Effective Votes at Snapshot >= minVotesToVote
-```
+A key detail: the threshold is **snapshotted** when you create the proposal. If the DAO later raises the threshold, your proposal still uses the original value. This prevents mid-flight threshold changes from invalidating existing proposals.
 
-Key details:
-- **Default**: 1 SXXX effective vote (low-friction, blocks 0-weight vote spam)
-- **Effective votes** include NFT multipliers when enabled
-- **Why it matters**: makes it more expensive to split voting power across many wallets for “per-voter” incentives
+---
 
-## Cancellation Rules
+## Cooldown: Rate Limiting Beyond Thresholds
 
-If your effective votes drop below the threshold while your proposal is active, **anyone can cancel it**.
+Even with threshold requirements, a well-funded attacker could meet the threshold and spam proposals. The cooldown adds rate limiting: a configurable delay (default 5 minutes) between proposals per address.
 
-### Cancel Window
+Threshold and cooldown work together: threshold filters who can propose (economic filter), cooldown limits how often they can propose (temporal filter). Both must pass to create a proposal.
 
-| Proposal State | Can Be Canceled for Low Votes? |
-|----------------|----------------------------------|
-| Pending | Yes |
-| Active (voting) | Yes |
-| Succeeded | No (safe point) |
-| Queued | No |
-| Executed | No |
-| Defeated | N/A (already ended) |
-| Canceled | N/A (already ended) |
+We considered making cooldown the only filter (no threshold), but rejected this because cooldown alone doesn't distinguish between valuable and spam proposals. Threshold adds an economic signal that cooldown lacks.
 
-### The "Safe Point"
-
-Once your proposal reaches **Succeeded** state (voting ended, passed), your votes no longer affect it. This is intentional:
-
-- Prevents post-vote manipulation (bribing proposer to dump tokens)
-- Provides certainty once community has voted
-- Anti-spam protection only needed during proposal lifecycle, not execution
-
-### Who Can Cancel
-
-| Scenario | Who Can Cancel |
-|----------|---------------|
-| Proposer wants to cancel | Proposer (while Pending) |
-| Proposer below threshold | Anyone (while Pending/Active) |
-
-### Threshold Snapshot
-
-The threshold is **snapshotted** when you create the proposal:
-
-```
-You propose at Threshold = 50 SXXX
-DAO later raises Threshold to 100 SXXX
-Your proposal still only requires 50 SXXX (original snapshot)
-```
-
-This prevents mid-flight threshold changes from invalidating existing proposals.
-
-## Cooldown
-
-Proposal threshold works alongside an optional **cooldown** period:
-
-```
-Check 1: Do you have enough effective votes? (proposalThreshold)
-Check 2: Has enough time passed since your last proposal? (cooldown)
-```
-
-Both must pass to create a proposal.
-
-### Why Cooldown?
-
-Even with threshold requirements, a well-funded attacker could spam proposals. Cooldown adds rate limiting:
-
-- Default: 5 minutes between proposals per address
-- DAO configurable via governance
-- Council-only DAOs may disable cooldown
+---
 
 ## Governance Profile Interactions
 
-Threshold requirements depend on your DAO's governance profile:
+Not all governance modes enforce thresholds:
 
-| Profile | Threshold Required? |
-|---------|-------------------|
-| COUNCIL_ONLY proposals | No (council members bypass) |
-| OPERATOR governance | No |
-| TOKEN + COMMUNITY_THRESHOLD | Yes |
+**COUNCIL_ONLY** proposals: Council members bypass the threshold. They're already trusted — adding a financial filter would be redundant friction.
 
-### Council Bypass
+**OPERATOR** governance: No threshold needed because the controller is already authorized.
 
-In COUNCIL_ONLY DAOs, council members can propose without meeting the threshold. They're already trusted.
+**TOKEN + COMMUNITY_THRESHOLD**: Full threshold enforcement. This is where thresholds matter most — open communities where anyone might try to propose.
 
-### Operator Mode
+This tiered enforcement reflects the principle that governance controls should match the trust model. High-trust environments (councils, operators) need less friction; low-trust environments (open token voting) need more.
 
-OPERATOR governance (personal/team DAOs) doesn't enforce threshold because the controller is already authorized.
+---
 
-## CLI Examples
+## The Minimum Voting Power to Vote
 
-### Check Your Readiness
+Separate from proposal thresholds, Sage enforces a minimum effective voting power to **cast a vote** (`minVotesToVote`, default: 1 SXXX effective vote).
 
-```bash
-# Full governance diagnostic
-sage governance doctor --subdao 0xYourDAO
+This exists to prevent vote spam: without it, someone could split tokens across thousands of wallets and cast thousands of 0-weight votes, which clutters governance UIs and can exploit per-voter incentive schemes. The 1 SXXX minimum makes this attack economically impractical.
 
-# Quick proposer readiness check
-sage governance proposer-ready --subdao 0xYourDAO
-```
-
-### View Threshold
-
-```bash
-# See current threshold
-sage governance threshold-status --subdao 0xYourDAO
-```
-
-Example output:
-```
-Proposal Threshold Status
--------------------------
-Threshold:        50 SXXX
-Your Effective Votes: 150 SXXX
-Status:           Ready to propose
-Cooldown:         None active
-```
-
-### Create a Proposal
-
-```bash
-sage governance propose \
-  --subdao 0xYourDAO \
-  --title "Update library settings" \
-  --description "Adjust parameters for better UX"
-```
-
-The CLI will:
-1. Check your effective votes vs threshold (delegation required)
-2. Check cooldown status
-3. Warn if you're close to threshold
-4. Submit proposal if all checks pass
-
-### Cancel a Proposal
-
-```bash
-# Cancel your own proposal (while Pending)
-sage governance cancel <proposal-id> --subdao 0xYourDAO
-
-# Cancel below-threshold proposal (anyone can call)
-sage governance cancel <proposal-id> --subdao 0xYourDAO
-```
-
-## Configuration for DAO Owners
-
-### Recommended Defaults
-
-| Parameter | Default | Notes |
-|-----------|---------|-------|
-| `proposalThreshold` | 50 SXXX | Meaningful but accessible |
-| `proposalCooldown` | 300 seconds (5 min) | Rate limiting |
-| `minVotesToVote` | 1 SXXX | Minimum effective votes to cast a vote |
-| `votingDelay` | 1 block | Allow immediate voting |
-| `votingPeriod` | 50,400 blocks (~7 days) | Standard voting window |
-| `quorum` | 4% | Standard OZ default |
-
-### Tuning for Your Community
-
-**Higher threshold (100-1000 SXXX):**
-- Fewer proposals, higher quality
-- Filters low-effort submissions
-- May exclude smaller holders
-
-**Lower threshold (10-50 SXXX):**
-- More accessible governance
-- Broader participation
-- May need longer cooldown for spam control
-
-**Longer cooldown (1 hour+):**
-- Stronger rate limiting
-- Good for DAOs expecting high activity
-- Trade-off: slower iteration
-
-### Changing Parameters
-
-Threshold and cooldown are governance-controlled:
-
-```bash
-# Propose threshold change
-sage governance propose \
-  --subdao 0xYourDAO \
-  --target <governor-address> \
-  --function "setProposalThreshold(uint256)" \
-  --args 100000000000000000000  # 100 SXXX in wei
-```
+---
 
 ## Relationship to Other Parameters
 
-### Threshold vs Quorum
+Proposal thresholds interact with several other governance parameters:
 
-| Parameter | Purpose | When It Matters |
-|-----------|---------|-----------------|
-| **Threshold** | Who can propose | Proposal creation |
-| **Quorum** | Minimum participation | Vote validity |
+**Quorum**: Threshold filters *who can propose*. Quorum ensures *enough people vote*. They solve different problems — threshold prevents proposal spam, quorum prevents minority capture.
 
-Threshold filters *proposers*. Quorum ensures *voter participation*.
+**Voting delay**: The gap between proposal creation and voting start. Together with thresholds, this gives the community time to review proposals from qualified proposers.
 
-### Threshold vs Voting Delay
+**Voting period**: How long voting is open. Longer periods are more accessible but slower. Threshold quality filtering helps justify longer voting periods (fewer proposals, each worth reviewing).
 
-Voting delay gives voters time to review proposals before voting starts. Threshold ensures proposers have enough voting power. They work together:
+---
 
-```
-Propose → [Voting Delay] → Voting Starts → [Voting Period] → Result
-   ↑                            ↑
-Threshold check            Quorum check
-```
+## Tuning for Your Community
 
-## Migration from Escrow Model
+The default threshold (50 SXXX) is intentionally moderate — high enough to filter casual spam, low enough that engaged community members can participate. But different communities need different calibration:
 
-If your DAO previously used the escrow/deposit model:
+**Higher thresholds** (100-1,000 SXXX) produce fewer proposals with higher average quality. They filter low-effort submissions but may exclude smaller holders. Good for mature DAOs with established contributors.
 
-**Old flow (removed):**
-1. Approve SXXX spend
-2. Propose (tokens escrowed)
-3. Claim refund after execution
+**Lower thresholds** (10-50 SXXX) produce more proposals with broader participation. They're more accessible but may need longer cooldowns to manage volume. Good for early-stage DAOs that want maximum engagement.
 
-**New flow:**
-1. Propose (tokens stay in wallet)
+The threshold is governance-controlled, so communities can adjust as they learn what works.
 
-No migration needed—just delegate voting power. The old `claimDeposit()` function is deprecated.
+---
 
-## Related
+## How This Connects
 
-- [Governance Models](./governance-models.md) - Overview of governance types
-- [Delegation & Voting Power](../guides/delegation-and-governance.md) - Getting voting power
-- [Voting on Proposals](../guides/voting-on-proposals.md) - How to vote
+- [Governance Models](governance-models.md) — The broader governance system
+- [Delegation & Voting Power](../guides/delegation-and-governance.md) — Getting voting power to meet thresholds
+- [Voting on Proposals](../guides/voting-on-proposals.md) — How to participate once proposals exist
+- [Voting Multipliers](voting-multipliers.md) — How multipliers affect effective votes and proposal eligibility

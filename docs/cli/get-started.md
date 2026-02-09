@@ -1,123 +1,147 @@
 # Get Started with the CLI
 
-The Sage CLI is your command-line interface for creating DAOs, publishing prompts, and managing governance. This guide covers installation and the most common workflows.
+In this tutorial, we will install the Sage CLI, connect a wallet, and create a prompt library with a personal DAO. Along the way, we will use the CLI's quickstart workflow, upload prompts to IPFS, and publish updates to an existing library.
 
-## Installation
+## Prerequisites
+
+- **Node.js** v18 or later (`node --version` to check)
+- **npm** v8 or later
+- A web3 wallet (we will use the Privy browser-based login)
+
+## Step 1: Install the CLI
 
 ```bash
 npm i -g @sage-protocol/cli
-# or run on demand
-npx @sage-protocol/cli --help
 ```
 
-The binary is published as `sage`. Update notifications appear once per day unless you set `SAGE_NO_UPDATE_CHECK=1`.
-
-## 1. Connect Your Wallet
+Verify the installation:
 
 ```bash
-# Interactive setup wizard
-sage wizard
+sage --version
+```
 
-# Or connect manually
-sage wallet connect
+You should see output similar to:
+
+```
+@sage-protocol/cli@0.6.2
+```
+
+The CLI binary is called `sage`. It will check for updates once per day automatically.
+
+## Step 2: Connect your wallet
+
+We will use the interactive setup wizard to connect a wallet.
+
+```bash
+sage wizard
+```
+
+Follow the prompts in your terminal. The wizard opens a browser window for Privy-based wallet login on Base Sepolia.
+
+Once complete, verify the connection:
+
+```bash
 sage wallet doctor
 ```
 
-The CLI supports multiple wallet types:
-- **Privy** (default): Browser-based login via web app relay
-- **Cast**: Foundry's cast wallet integration
-- **Private key**: Direct key in `.env` (not recommended for production)
+You should see output showing your wallet address, chain ID `84532`, and a green checkmark for RPC connectivity.
 
-## Quick Start: Create a Library
+## Step 3: Get testnet tokens
 
-The fastest way to get started is `library quickstart` - it creates a DAO, uploads your prompts to IPFS, and registers everything in one command:
+We need SXXX governance tokens to create a DAO.
 
 ```bash
-# Create a directory with your prompts
-mkdir prompts
-echo "# My First Prompt\n\nYour prompt content here" > prompts/my-prompt.md
+sage sxxx faucet
+```
 
-# One command to create DAO + publish prompts
+You should see:
+
+```
+✓ Sent SXXX to 0xYourAddress
+```
+
+Confirm the balance:
+
+```bash
+sage sxxx balance
+```
+
+You should see at least 5000 SXXX. (See [the wallet reference](./command-reference.md) for all wallet-related commands.)
+
+## Step 4: Create a prompt directory
+
+Let's create a directory with a prompt file for our library.
+
+```bash
+mkdir prompts
+```
+
+```bash
+echo "# My First Prompt
+
+Your prompt content here" > prompts/my-prompt.md
+```
+
+## Step 5: Create a library
+
+Now we will use `library quickstart` to create a DAO, upload our prompt to IPFS, and register everything on-chain in one command.
+
+```bash
 sage library quickstart --name "My Library" --from-dir ./prompts
 ```
 
-This will:
-1. Scan your `prompts/` directory for `.md` files
-2. Upload each prompt to IPFS
-3. Create a DAO with personal governance
-4. Register the manifest on-chain
-5. Save an alias and set your context
+You should see output similar to:
 
-## Publishing Updates
+```
+✓ Scanned 1 prompt from ./prompts
+✓ Uploaded to IPFS
+✓ Created DAO at 0xAbC123... (personal governance)
+✓ Manifest CID: bafybeig...
+✓ Registered on-chain
+✓ Saved alias "My Library"
+✓ Context set to "My Library"
+```
 
-After your library exists, publish updates with:
+Notice that the CLI created a personal governance DAO, saved an alias, and set it as our active context. All future commands will use this DAO by default. (See [Governance Modes](../core-concepts/governance-modes.md) for other governance types.)
+
+## Step 6: Add another prompt
+
+Let's add a second prompt to our library.
 
 ```bash
-# Add or edit prompts in your workspace
 sage prompts new --name "another-prompt"
-# Edit prompts/another-prompt.md
+```
 
-# Publish changes
+You should see:
+
+```
+✓ Created prompts/another-prompt.md
+```
+
+Edit `prompts/another-prompt.md` in your editor and add your content, then save.
+
+## Step 7: Publish the update
+
+```bash
 sage prompts publish --yes
 ```
 
-## Governance Types
+You should see output similar to:
 
-Choose a governance playbook based on your needs:
-
-```bash
-# Personal (solo creator, fastest)
-sage dao create-playbook --playbook personal --name "My Library"
-
-# Council (team with Safe multisig)
-sage dao create-playbook --playbook council-closed --name "Team Library" \
-  --owners "0xAlice,0xBob,0xCarol" --threshold 2
-
-# Community (token voting, full democracy)
-sage dao create-playbook --playbook community --name "Community DAO"
+```
+✓ Uploaded 2 prompts to IPFS
+✓ Manifest CID: bafybeih...
+✓ Proposal created and executed
+✓ Library updated on-chain
 ```
 
-See [Governance Modes](../core-concepts/governance-modes.md) for details on each playbook.
+Notice that the new manifest includes both our original and new prompt.
 
-## Running the MCP Server
+## What we accomplished
 
-For AI agent integration via Model Context Protocol:
+We installed the Sage CLI, connected a wallet via Privy, obtained testnet SXXX, and created a governed prompt library on Base Sepolia. We then added a second prompt and published an update. From here, you can:
 
-```bash
-# Start MCP server
-sage mcp
-
-# Or run in stdio mode for Claude Desktop
-node packages/cli/src/mcp-server-stdio.js
-```
-
-Configure Claude Desktop in `claude_desktop_config.json`:
-```json
-{
-  "mcpServers": {
-    "sage": {
-      "command": "npx",
-      "args": ["@sage-protocol/cli", "mcp"]
-    }
-  }
-}
-```
-
-## Common Commands
-
-| Task | Command |
-|------|---------|
-| Create library + DAO | `sage library quickstart --name "..." --from-dir ./prompts` |
-| Show DAO info | `sage dao info <address>` |
-| Set working DAO | `sage dao use <address-or-alias>` |
-| Publish prompts | `sage prompts publish --yes` |
-| Vote on proposal | `sage governance vote <id> 1` |
-| Check wallet | `sage wallet doctor` |
-| Get testnet tokens | `sage sxxx faucet` |
-
-## Next Steps
-
-- [Creating a SubDAO](../guides/creating-a-subdao.md) - Detailed DAO creation guide
-- [Publishing Prompts](../guides/publishing-and-versioning-prompts.md) - Prompt management workflows
-- [Governance Modes](../core-concepts/governance-modes.md) - Understanding playbooks
-- [CLI Command Reference](./command-reference.md) - Full command documentation
+- [Create a SubDAO with custom governance](../guides/creating-a-subdao.md) — explore community and council governance
+- [Publish and version prompts](../guides/publishing-and-versioning-prompts.md) — advanced prompt management workflows
+- [Set up the MCP server for AI agents](../guides/using-the-mcp-server.md) — let agents access your library
+- [See the full CLI command reference](./command-reference.md) — all available commands and flags

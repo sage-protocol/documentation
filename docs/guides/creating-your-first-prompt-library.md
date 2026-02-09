@@ -1,65 +1,82 @@
-# Creating Your First Prompt Library
+# Create Your First Prompt Library
 
-This guide walks through going from a fresh Sage CLI install to a governed prompt library that agents can use via the MCP server.
+In this tutorial, we will set up a wallet, create a prompt workspace, author a prompt, publish it through a DAO, and verify that AI agents can access it via the MCP server. Along the way, we will use the Sage CLI's governance workflow and IPFS publishing pipeline.
 
-The steps are:
-1. Set up your wallet and get test SXXX.
-2. Initialize a local prompts workspace.
-3. Author and test a prompt.
-4. Publish through a DAO with governance.
-5. Let agents access it via the MCP server.
+## Prerequisites
 
----
+- Sage CLI installed (`sage --version` shows `0.6.x` or later)
+- Base Sepolia ETH for gas (see [Quick Start](../../../docs/getting-started/quick-start.md) if you need testnet funds)
 
-## 1. Wallet Setup and Testnet Funds
+## Step 1: Set up the wallet
 
-Sage CLI defaults to a Privy-backed wallet on Base Sepolia in recent versions.
+Let's initialize and verify our wallet connection.
 
-1. **Initialize your wallet and config**
-   ```bash
-   sage wallet init
-   sage wallet doctor
-   ```
-   - `wallet init` walks you through connecting with Privy.
-   - `wallet doctor` verifies RPC, chain ID, and wallet connectivity.
+```bash
+sage wallet init
+```
 
-2. **Get SXXX for governance and publishing**
-   On Base Sepolia, use the built-in SXXX faucet:
-   ```bash
-   sage sxxx faucet --check   # view limits and cooldown
-   sage sxxx faucet           # request SXXX to your connected wallet
-   ```
+Follow the prompts to connect via Privy. Once complete, verify:
 
-3. **Optional: delegate voting power**
-   ```bash
-   sage sxxx delegate-self
-   ```
-   This ensures your SXXX voting power counts for voting in DAOs that use SXXX‑weighted governance.
+```bash
+sage wallet doctor
+```
 
----
+You should see your wallet address, chain ID `84532` (Base Sepolia), and green checkmarks for RPC connectivity and wallet access.
 
-## 2. Initialize a Prompts Workspace
+## Step 2: Get SXXX tokens
 
-From your project directory, create a Sage workspace:
+We need SXXX governance tokens for DAO creation and publishing.
+
+```bash
+sage sxxx faucet
+```
+
+You should see:
+
+```
+✓ Sent SXXX to 0xYourAddress
+```
+
+Confirm the balance:
+
+```bash
+sage sxxx balance
+```
+
+You should see at least 5000 SXXX.
+
+## Step 3: Delegate voting power
+
+We need to delegate our SXXX voting power to ourselves so it counts in governance.
+
+```bash
+sage sxxx delegate-self
+```
+
+You should see:
+
+```
+✓ Delegated voting power to 0xYourAddress
+```
+
+## Step 4: Initialize a prompts workspace
 
 ```bash
 sage prompts init
 ```
 
-This creates:
-- `.sage/workspace.json` – workspace configuration.
-- `prompts/` – folder where your prompt markdown files live.
+You should see:
 
-You can check status at any time with:
-```bash
-sage prompts status
+```
+✓ Created .sage/workspace.json
+✓ Created prompts/ directory
 ```
 
----
+Notice that the CLI created a `prompts/` folder and a `.sage/workspace.json` configuration file in your current directory.
 
-## 3. Author and Test a Prompt
+## Step 5: Author a prompt
 
-Create a simple prompt file in the `prompts/` folder, for example:
+Create a prompt file in the `prompts/` directory:
 
 ```bash
 cat > prompts/hello-world.md << 'EOF'
@@ -72,68 +89,74 @@ You are a helpful assistant. Say hello to the user and ask one clarifying questi
 EOF
 ```
 
-Try it locally with:
+Let's verify the workspace detects our new file:
+
 ```bash
-sage prompts try hello-world
+sage prompts status
 ```
 
-You can add more prompts over time; `sage prompts status` will show added and modified prompts in your workspace.
+You should see:
 
----
+```
+Changes:
+  +1 added: hello-world.md
 
-## 4. Publish Through a DAO
+Ready to publish.
+```
 
-To make your library governed and discoverable, you’ll publish it through a DAO that controls a `LibraryRegistry`/`PromptRegistry` instance.
+## Step 6: Publish through a DAO
 
-1. **Choose or create a DAO**
-   - Use an existing DAO address (e.g. one created with `sage dao create-playbook`).
-   - Or follow the “Creating and Configuring a DAO” guide first.
+Now we will publish our prompt. The CLI will create a DAO (if we don't have one), upload to IPFS, and register the manifest on-chain.
 
-2. **Publish prompts to that DAO**
-   From your workspace root:
-   ```bash
-   sage prompts publish --dao 0xYourDAOAddress
-   ```
+```bash
+sage library quickstart --name "My Library" --from-dir ./prompts
+```
 
-   The CLI will:
-   - Build a manifest from your `prompts/` files.
-   - Upload the manifest and content to IPFS.
-   - Create a governance proposal or operator-mode execution, depending on the DAO’s playbook.
+You should see output similar to:
 
-3. **Follow the governance lifecycle**
-   After publishing, use the governance commands to drive the proposal through:
-   ```bash
-   sage proposals inbox  --dao 0xYourDAOAddress   # see pending/active proposals
-   sage proposals vote   <id> for --dao 0xYourDAOAddress
-   sage proposals status --dao 0xYourDAOAddress   # see next recommended action
-   sage proposals execute <id> --dao 0xYourDAOAddress
-   ```
+```
+✓ Created DAO at 0xAbC123... (personal governance)
+✓ Uploaded 1 prompt to IPFS
+✓ Manifest CID: bafybeig...
+✓ Registered on-chain
+✓ Saved alias "My Library"
+```
 
-Once the proposal executes, the DAO’s registry points to your new manifest CID, and that version becomes the “official” library for agents and users.
+Notice that the CLI created a personal governance DAO, which executes updates immediately without a voting period. (See [Governance Modes](../core-concepts/governance-modes.md) for community and council options.)
 
----
+## Step 7: Verify the published library
 
-## 5. Using MCP With Your Library
+Let's confirm our library is live on-chain:
 
-After your DAO has approved a manifest, agents don’t need to know contract addresses or CIDs directly—they talk to the Sage MCP server instead.
+```bash
+sage project view-prompts <manifestCID>
+```
 
-1. **Run the MCP server**
-   ```bash
-   sage mcp start --port 3000
-   ```
-   or in stdio mode for tools like Claude Desktop:
-   ```bash
-   node packages/cli/src/mcp-server-stdio.js
-   ```
+Replace `<manifestCID>` with the CID printed in Step 6.
 
-2. **What agents can do via MCP**
-   - **Discover**: Find your DAO and its libraries using on-chain metadata and subgraph indexing, instead of hardcoded addresses.
-   - **Search**: Look up prompts in your approved manifest by keywords or tags, grounded in governed content rather than ad-hoc files.
-   - **Fetch**: Retrieve the latest manifest and specific prompts for use inside agent workflows, always using the DAO-approved CID.
-   - **Validate & Plan**: Check manifests and prompt structure, then generate publishing commands that humans can run to propose updates, instead of having agents call governance contracts directly.
+You should see your `hello-world` prompt listed with its own IPFS CID.
 
-In practice, this means you can:
-- Use the CLI for authoring and governance (`sage prompts`, `sage project`, `sage proposals`, `sage dao`).
-- Let agents use MCP to read from and suggest changes to your library, without bypassing timelocks, Safe approvals, or DAO voting.
+## Step 8: Start the MCP server
 
-With this flow in place, you have a complete path from local markdown prompts to governed, agent-ready libraries on Base Sepolia.
+Now let's make our library accessible to AI agents via the Model Context Protocol.
+
+```bash
+sage mcp start --port 3000
+```
+
+You should see:
+
+```
+✓ MCP server listening on port 3000
+```
+
+Agents connected to this MCP server can now discover your DAO, search your prompts by keyword, and fetch the latest governed manifest — all without knowing contract addresses or CIDs directly. (See [Using the MCP Server](using-the-mcp-server.md) for Claude Desktop integration and advanced configuration.)
+
+## What we accomplished
+
+We set up a wallet on Base Sepolia, authored a prompt, published it through a governed DAO, and started an MCP server so AI agents can access our library. The complete pipeline — from local markdown to governed, agent-ready content — is now in place. From here, you can:
+
+- [Add more prompts and publish updates](publishing-and-versioning-prompts.md) — manage your growing library
+- [Create a SubDAO with team governance](creating-a-subdao.md) — share control with collaborators
+- [Explore delegation and voting](delegation-and-governance.md) — participate in community governance
+- [See the full CLI command reference](../cli/command-reference.md) — all available commands and flags
