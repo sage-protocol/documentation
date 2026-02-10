@@ -75,8 +75,8 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 {
   "mcpServers": {
     "sage": {
-      "command": "node",
-      "args": ["/path/to/sage-protocol/packages/cli/src/mcp-server-stdio.js"]
+      "command": "sage",
+      "args": ["mcp", "start"]
     }
   }
 }

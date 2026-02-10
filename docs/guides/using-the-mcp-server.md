@@ -8,24 +8,10 @@ This guide explains how to run the server and how each tool maps to Sage’s on-
 
 ## 1. Running the MCP Server
 
-### HTTP mode (for local agents and web tooling)
-
-```bash
-sage mcp start --port 3000
-```
-
-- Default host: `localhost`
-- Default port: `3000`
-
-Endpoints (JSON over HTTP):
-- `POST /mcp/search` – wrapper around `search_prompts` and `search_onchain_prompts`
-- `POST /mcp/fetch` – wrapper around `get_prompt` and manifest fetch helpers
-- `POST /mcp/validate` – basic manifest / prompt validation
-
 ### Stdio mode (for Claude Desktop and other MCP-native runtimes)
 
 ```bash
-node packages/cli/src/mcp-server-stdio.js
+sage mcp start
 ```
 
 In Claude Desktop, configure:
@@ -34,8 +20,8 @@ In Claude Desktop, configure:
 {
   "mcpServers": {
     "sage": {
-      "command": "node",
-      "args": ["/path/to/sage/packages/cli/src/mcp-server-stdio.js"]
+      "command": "sage",
+      "args": ["mcp", "start"]
     }
   }
 }
@@ -162,4 +148,3 @@ Agents should not call governance contracts directly; instead, they:
   When using `search_onchain_prompts`, `list_subdao_libraries`, or `suggest_subdaos_for_library`, always surface which DAO a prompt or library is governed by so users know the source of authority.
 
 This framing keeps the MCP server powerful for agents while still respecting the governance model described in the rest of the litepaper.
-

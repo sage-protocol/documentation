@@ -537,11 +537,9 @@ export LIT_NETWORK=datil-test
 
 | Component         | File                                              | Purpose                                    |
 | ----------------- | ------------------------------------------------- | ------------------------------------------ |
-| Encryption flow   | `packages/cli/src/commands/personal.js:556-778`   | `sellAction()`                             |
-| Decryption flow   | `packages/cli/src/commands/personal.js:1200-1493` | `accessAction()`                           |
-| Lit utilities     | `packages/cli/src/utils/lit.js`                   | `encryptStringWithLit`, `buildNodeAuthSig` |
-| AES utilities     | `packages/cli/src/utils/aes.js`                   | `encryptAesGcm`, `decryptAesGcm`           |
-| Access conditions | `packages/cli/src/utils/personal-helpers.js`      | `buildAccessControlConditions`             |
+| Encryption flow   | `packages/sdk/src/personal/*`                     | Personal encryption + access helpers       |
+| Decryption flow   | `packages/sdk/src/personal/*`                     | Personal decryption + access helpers       |
+| Access conditions | `packages/sage-web-app/src/lib/sage/premium.ts`    | `buildAccessControlConditions`             |
 | SDK decryption    | `packages/sdk/src/personal/access.js:129-185`     | `decryptWithLit()`                         |
 | Receipt ID        | `packages/sdk/src/personal/receipt.js`            | `computeReceiptId()`                       |
 
